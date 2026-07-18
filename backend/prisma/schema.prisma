@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int               @id @default(autoincrement())
+  email         String            @unique
+  password_hash String
+  sessions      TrainingSession[]
+  weekly_goal   WeeklyGoal?
+}
+
+model TrainingSession {
+  id      Int      @id @default(autoincrement())
+  user_id Int
+  date    DateTime
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model WeeklyGoal {
+  user_id         Int @id
+  target_sessions Int
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}

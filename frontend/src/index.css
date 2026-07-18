@@ -1,0 +1,396 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+/* ── Reset ───────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Design tokens — kleuren, typografie, spacing, radius, shadows ───── */
+:root {
+    --color-bg-default: #F8F7F5;
+    --color-surface: #FFFFFF;
+    --color-text-primary: #1A1A1A;
+    --color-text-secondary: #6B7280;
+    --color-border: #E5E7EB;
+    --color-primary: #E10600;
+    --color-primary-hover: #C70500;
+    --color-primary-soft: #FCECEC;
+    --color-reward-gold: #F5B301;
+    --color-reward-silver: #C0C0C0;
+    --color-reward-bronze: #C47A2C;
+    --shadow-card: 0px 4px 12px rgba(0,0,0,0.08);
+    --shadow-card-hover: 0px 6px 16px rgba(0,0,0,0.12);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 999px;
+    --font-base: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Basis — achtergrond en font op html en body ─────────────────────── */
+html, body {
+    height: 100%;
+    background: var(--color-bg-default);
+    font-family: var(--font-base);
+    color: var(--color-text-primary);
+}
+
+/* ── Schermsysteem — React Router beheert welk scherm zichtbaar is ───── */
+.screen {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    max-width: 430px;
+    margin: 0 auto;
+    background: var(--color-bg-default);
+}
+
+/* ── Navbar — logo, paginatitel en icoonknop ─────────────────────────── */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 98px 24px 16px;
+    background: var(--color-bg-default);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--color-text-primary);
+}
+
+.nav-title {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+}
+
+.icon-btn {
+    background: none;
+    border: 1px solid var(--color-border);
+    border-bottom: 3px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 24px;
+    color: var(--color-text-primary);
+    padding: 4px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s, border-bottom 0.1s;
+}
+
+/* OPT05 T05 — indruk animatie op icoonknop */
+.icon-btn:active {
+    transform: translateY(2px);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Content wrapper — flex kolom met gap tussen kaarten ─────────────── */
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 24px 32px;
+    margin-top: 24px;
+    align-items: center;
+}
+
+/* ── Card — basis kaart stijl ────────────────────────────────────────── */
+.card {
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    width: 100%;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+}
+
+/* ── Knoppen ─────────────────────────────────────────────────────────── */
+
+/* Primaire knop — rode achtergrond, gebruikt voor hoofd-acties */
+/* OPT08 - Primaire acties direct zichtbaar maken (met accenten) */
+.btn-primary {
+    width: 100%;
+    background: var(--color-primary);
+    color: var(--color-surface);
+    border: none;
+    /* OPT05 T05 — 3D effect maakt knop herkenbaar als interactief element */
+    border-bottom: 3px solid var(--color-primary-hover);
+    border-radius: var(--radius-sm);
+    padding: 12px 24px;
+    margin-top: 12px;
+    font-family: var(--font-base);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.1s, border-bottom 0.1s;
+}
+
+/* OPT05 T05 — indruk animatie simuleert fysieke knop op touch */
+.btn-primary:active {
+    transform: translateY(2px);
+    border-bottom: 1px solid var(--color-primary-hover);
+    background: var(--color-primary-hover);
+}
+
+.btn-primary:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* Check-in knop variant — groter dan standaard primaire knop */
+/* OPT08 - Primaire acties direct zichtbaar maken (met accenten) */
+.btn-checkin {
+    padding: 64px 48px;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+/* Secundaire knop — witte achtergrond, gebruikt voor navigatie */
+.btn-secondary {
+    width: 100%;
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    /* OPT05 T05 — 3D effect onderscheidt knop van statische content */
+    border-bottom: 3px solid #D1D5DB;
+    border-radius: var(--radius-sm);
+    padding: 12px 24px;
+    font-family: var(--font-base);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.1s, border-bottom 0.1s;
+}
+
+.btn-secondary:hover {
+    box-shadow: var(--shadow-card-hover);
+}
+
+/* OPT05 T05 — indruk animatie simuleert fysieke knop op touch */
+.btn-secondary:active {
+    transform: translateY(2px);
+    border-bottom: 1px solid #D1D5DB;
+}
+
+/* ── Voortgangsring — SVG cirkel met animatie ────────────────────────── */
+.ring-wrapper {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+}
+
+.progress-ring {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.ring-bg {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 12;
+}
+
+.ring-fg {
+    fill: none;
+    stroke: var(--color-primary);
+    stroke-width: 12;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease;
+}
+
+.ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ring-num {
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 48px;
+    color: var(--color-text-primary);
+}
+
+.progress-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--color-text-primary);
+}
+
+/* ── Progress card — dynamische accent lijn links ────────────────────── */
+.progress-card {
+    border-left: 4px solid transparent;
+    transition: border-color 0.4s ease;
+    text-align: center;
+}
+
+.progress-card.bronze {
+    border-left-color: var(--color-reward-bronze);
+}
+
+.progress-card.silver {
+    border-left-color: var(--color-reward-silver);
+}
+
+.progress-card.gold {
+    border-left-color: var(--color-reward-gold);
+}
+
+/* ── Goal box — weekdoel sectie binnen progress card ────────────────── */
+.goal-box {
+    width: 100%;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.goal-label {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    margin-bottom: 4px;
+}
+
+.goal-value {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--color-text-primary);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+/* ── Confirmation banner — roze achtergrond (FR02, FR09) ─────────────── */
+.confirmation-banner {
+    background: var(--color-primary-soft);
+    border: 1px solid var(--color-border);
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+    color: var(--color-text-primary);
+}
+
+/* ── Settings — picker titel ─────────────────────────────────────────── */
+.picker-title {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--color-text-primary);
+}
+
+/* ── Settings — radiobuttons weekdoel ───────────────────────────────── */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-text-primary);
+}
+
+.radio-option:last-child {
+    border-bottom: none;
+}
+
+.radio-option input[type='radio'] {
+    display: none;
+}
+
+/* Custom radio cirkel */
+.radio-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.radio-dot::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    opacity: 0;
+}
+
+.radio-option.selected .radio-dot {
+    border-color: var(--color-primary);
+}
+
+.radio-option.selected .radio-dot::after {
+    opacity: 1;
+}
+
+/* ── Responsive — past layout aan voor kleinere schermen ─────────────── */
+@media (max-height: 700px) {
+    .navbar {
+        padding: 16px 24px 12px;
+    }
+
+    .ring-wrapper {
+        width: 160px;
+        height: 160px;
+    }
+
+    .ring-num {
+        font-size: 32px;
+    }
+
+    .btn-checkin {
+        padding: 20px 24px;
+        font-size: 24px;
+    }
+
+    .radio-option {
+        padding: 8px 16px;
+    }
+}
+
+@media (max-width: 360px) {
+    .content {
+        padding: 8px 16px 24px;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .ring-wrapper {
+        width: 160px;
+        height: 160px;
+    }
+
+    .ring-num {
+        font-size: 32px;
+    }
+}

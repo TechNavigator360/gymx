@@ -1,0 +1,1373 @@
+{
+  "info": {
+    "_postman_id": "1086bc6c-fc8f-4e19-a8d5-86362155d4d7",
+    "name": "GYMX - Deployed",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "54559825",
+    "_collection_link": "https://go.postman.co/collection/54559825-1086bc6c-fc8f-4e19-a8d5-86362155d4d7?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "T00 GET health",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T00 - Health endpoint returns 200 OK\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T00 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T00 - Backend reports running status\", function () {\r",
+              "    pm.expect(response.status).to.eql(\"ok\");\r",
+              "    pm.expect(response.message).to.include(\"GYMX backend\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T01 Register User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T01 - User registration succeeds or already exists\", function () {\r",
+              "    pm.expect([201, 400]).to.include(pm.response.code);\r",
+              "});\r",
+              "\r",
+              "if (pm.response.code === 201) {\r",
+              "\r",
+              "    pm.test(\"T01 - Response is JSON\", function () {\r",
+              "        pm.response.to.be.json;\r",
+              "    });\r",
+              "\r",
+              "    const response = pm.response.json();\r",
+              "\r",
+              "    pm.test(\"T01 - User object returned\", function () {\r",
+              "        pm.expect(response.user).to.exist;\r",
+              "        pm.expect(response.user.email).to.eql(\r",
+              "            pm.collectionVariables.get(\"userAEmail\")\r",
+              "        );\r",
+              "    });\r",
+              "}\r",
+              "\r",
+              "if (pm.response.code === 400) {\r",
+              "\r",
+              "    const response = pm.response.json();\r",
+              "\r",
+              "    pm.test(\"T01 - Duplicate registration handled safely\", function () {\r",
+              "        pm.expect(response.message).to.exist;\r",
+              "    });\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"{{userAEmail}}\",\r\n  \"password\": \"{{userAPassword}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T02 Login User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T02 - Login successful\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T02 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T02 - JWT token returned\", function () {\r",
+              "    pm.expect(response.token).to.exist;\r",
+              "    pm.expect(response.token).to.be.a(\"string\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T02 - User returned\", function () {\r",
+              "    pm.expect(response.user).to.exist;\r",
+              "    pm.expect(response.user.email).to.eql(\r",
+              "        pm.collectionVariables.get(\"userAEmail\")\r",
+              "    );\r",
+              "});\r",
+              "\r",
+              "// Save token for later protected endpoint tests\r",
+              "pm.collectionVariables.set(\"userAToken\", response.token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"{{userAEmail}}\",\r\n  \"password\": \"{{userAPassword}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T03 GET auth/me User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T03 - Authenticated user endpoint returns 200 OK\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T03 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T03 - Authenticated user object exists\", function () {\r",
+              "    pm.expect(response.user).to.exist;\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T03 - Authenticated user id exists\", function () {\r",
+              "    pm.expect(response.user.id).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T04 Register User B",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T04 - User B registration succeeds or already exists\", function () {\r",
+              "    pm.expect([201, 400]).to.include(pm.response.code);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T04 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "if (pm.response.code === 201) {\r",
+              "    pm.test(\"T04 - User B object returned\", function () {\r",
+              "        pm.expect(response.user).to.exist;\r",
+              "        pm.expect(response.user.email).to.eql(\r",
+              "            pm.collectionVariables.get(\"userBEmail\")\r",
+              "        );\r",
+              "    });\r",
+              "}\r",
+              "\r",
+              "if (pm.response.code === 400) {\r",
+              "    pm.test(\"T04 - Duplicate User B handled safely\", function () {\r",
+              "        pm.expect(response.message).to.exist;\r",
+              "    });\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"{{userBEmail}}\",\r\n  \"password\": \"{{userBPassword}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T05 Login User B",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T05 - User B login successful\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T05 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T05 - JWT token returned\", function () {\r",
+              "    pm.expect(response.token).to.exist;\r",
+              "    pm.expect(response.token).to.be.a(\"string\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T05 - User B returned\", function () {\r",
+              "    pm.expect(response.user).to.exist;\r",
+              "    pm.expect(response.user.email).to.eql(\r",
+              "        pm.collectionVariables.get(\"userBEmail\")\r",
+              "    );\r",
+              "});\r",
+              "\r",
+              "// Save User B token for authorization tests\r",
+              "pm.collectionVariables.set(\"userBToken\", response.token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"{{userBEmail}}\",\r\n  \"password\": \"{{userBPassword}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T06 Create session User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T06 - Training session created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T06 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T06 - Session id returned\", function () {\r",
+              "    pm.expect(response.id).to.exist;\r",
+              "});\r",
+              "\r",
+              "pm.collectionVariables.set(\"userASessionId\", String(response.id));\r",
+              "\r",
+              "pm.test(\"T06 - userASessionId saved\", function () {\r",
+              "    pm.expect(pm.collectionVariables.get(\"userASessionId\")).to.exist;\r",
+              "});\r",
+              "\r",
+              "console.log(\"Saved userASessionId:\", pm.collectionVariables.get(\"userASessionId\"));"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"date\": \"2026-05-28\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/sessions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sessions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T07 Get all sessions User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T07 - Get all sessions returns 200 OK\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T07 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T07 - Response is an array\", function () {\r",
+              "    pm.expect(response).to.be.an(\"array\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T07 - User A session is present\", function () {\r",
+              "    const userASessionId = Number(pm.collectionVariables.get(\"userASessionId\"));\r",
+              "\r",
+              "    const foundSession = response.find(session => {\r",
+              "        return session.id === userASessionId;\r",
+              "    });\r",
+              "\r",
+              "    pm.expect(foundSession).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sessions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sessions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T08 Get one session User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T08 - Get one session returns 200 OK\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T08 - Correct session returned\", function () {\r",
+              "    pm.expect(response.id).to.eql(\r",
+              "        Number(pm.collectionVariables.get(\"userASessionId\"))\r",
+              "    );\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sessions/{{userASessionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sessions",
+            "{{userASessionId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T09 Get current-week sessions User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T09 - Current-week sessions returns 200 OK\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T09 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T09 - Response is an array\", function () {\r",
+              "    pm.expect(response).to.be.an(\"array\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T09 - All returned sessions belong to User A\", function () {\r",
+              "    response.forEach(session => {\r",
+              "        pm.expect(session).to.have.property(\"id\");\r",
+              "        pm.expect(session).to.have.property(\"user_id\");\r",
+              "        pm.expect(session).to.have.property(\"date\");\r",
+              "    });\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sessions?week=current",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sessions"
+          ],
+          "query": [
+            {
+              "key": "week",
+              "value": "current"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T10 Create delete-test session User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T10 - Delete test session created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.collectionVariables.set(\r",
+              "    \"deleteSessionId\",\r",
+              "    String(response.id)\r",
+              ");\r",
+              "\r",
+              "pm.test(\"T10 - Delete session ID stored\", function () {\r",
+              "    pm.expect(\r",
+              "        pm.collectionVariables.get(\"deleteSessionId\")\r",
+              "    ).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"date\": \"2026-05-29\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/sessions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sessions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T11 Delete own session User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T11 - Own session deleted successfully\", function () {\r",
+              "    pm.expect([200, 204]).to.include(pm.response.code);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T11 - deleteSessionId exists\", function () {\r",
+              "    pm.expect(\r",
+              "        pm.collectionVariables.get(\"deleteSessionId\")\r",
+              "    ).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sessions/{{deleteSessionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sessions",
+            "{{deleteSessionId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T12 Get deleted session User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T12 - Deleted session returns 404\", function () {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T12 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T12 - Error message returned\", function () {\r",
+              "    pm.expect(response.message).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sessions/{{deleteSessionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sessions",
+            "{{deleteSessionId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T13 User B tries GET User A session",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "console.log(\"userBToken:\", pm.collectionVariables.get(\"userBToken\"));"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T13 - User B cannot read User A session\", function () {\r",
+              "    pm.response.to.have.status(403);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T13 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T13 - Forbidden message returned\", function () {\r",
+              "    pm.expect(response.message).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userBToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sessions/{{userASessionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sessions",
+            "{{userASessionId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T14 User B tries DELETE User A session",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T14 - User B cannot delete User A session\", function () {\r",
+              "    pm.response.to.have.status(403);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userBToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/sessions/{{userASessionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "sessions",
+            "{{userASessionId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T15 GET weekly-goal User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T15 - Weekly goal endpoint responds correctly\", function () {\r",
+              "    pm.expect([200, 404]).to.include(pm.response.code);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/weekly-goal",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "weekly-goal"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T16 POST weekly-goal User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T16 - Weekly goal created\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T16 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T16 - Weekly goal contains target_sessions\", function () {\r",
+              "    pm.expect(response.target_sessions).to.eql(3);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"target_sessions\": 3\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/weekly-goal",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "weekly-goal"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T17 PATCH weekly-goal User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T17 - Weekly goal updated\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T17 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T17 - Weekly goal updated to 4\", function () {\r",
+              "    pm.expect(response.target_sessions).to.eql(4);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"target_sessions\": 4\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/weekly-goal",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "weekly-goal"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T18 GET progress User A",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T18 - Current week progress returns 200 OK\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T18 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T18 - Progress response contains expected fields\", function () {\r",
+              "    pm.expect(response.completedSessions).to.exist;\r",
+              "    pm.expect(response.weeklyGoal).to.exist;\r",
+              "    pm.expect(response.remainingSessions).to.exist;\r",
+              "    pm.expect(response.weekStart).to.exist;\r",
+              "    pm.expect(response.weekEnd).to.exist;\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T18 - Remaining sessions is never negative\", function () {\r",
+              "    pm.expect(response.remainingSessions).to.be.at.least(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{userAToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/progress/current-week",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "progress",
+            "current-week"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T19 Missing token check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T19 - Missing token returns 401\", function () {\r",
+              "    pm.response.to.have.status(401);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T19 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T19 - Error message returned\", function () {\r",
+              "    pm.expect(response.message).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T20 Invalid token check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"T20 - Invalid token returns 401\", function () {\r",
+              "    pm.response.to.have.status(401);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T20 - Response is JSON\", function () {\r",
+              "    pm.response.to.be.json;\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.test(\"T20 - Invalid token message returned\", function () {\r",
+              "    pm.expect(response.message).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "invalid-token",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "T99 Cleanup variables",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const variablesToClear = [\r",
+              "    \"userAEmail\",\r",
+              "    \"userAToken\",\r",
+              "    \"userBEmail\",\r",
+              "    \"userBToken\",\r",
+              "    \"userASessionId\",\r",
+              "    \"deleteSessionId\",\r",
+              "    \"weeklyGoal\"\r",
+              "];\r",
+              "\r",
+              "variablesToClear.forEach(variableName => {\r",
+              "    pm.collectionVariables.unset(variableName);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"T99 - Temporary test variables cleared\", function () {\r",
+              "    variablesToClear.forEach(variableName => {\r",
+              "        pm.expect(pm.collectionVariables.get(variableName)).to.be.undefined;\r",
+              "    });\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "const timestamp = Date.now();\r",
+          "\r",
+          "if (!pm.collectionVariables.get(\"userAEmail\")) {\r",
+          "    pm.collectionVariables.set(\"userAEmail\", `usera_${timestamp}@gymx.test`);\r",
+          "}\r",
+          "\r",
+          "if (!pm.collectionVariables.get(\"userBEmail\")) {\r",
+          "    pm.collectionVariables.set(\"userBEmail\", `userb_${timestamp}@gymx.test`);\r",
+          "}\r",
+          "\r",
+          "if (!pm.collectionVariables.get(\"userAPassword\")) {\r",
+          "    pm.collectionVariables.set(\"userAPassword\", \"Password123!\");\r",
+          "}\r",
+          "\r",
+          "if (!pm.collectionVariables.get(\"userBPassword\")) {\r",
+          "    pm.collectionVariables.set(\"userBPassword\", \"Password123!\");\r",
+          "}\r",
+          "\r",
+          "if (!pm.collectionVariables.get(\"weeklyGoal\")) {\r",
+          "    pm.collectionVariables.set(\"weeklyGoal\", 3);\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "userAPassword",
+      "value": ""
+    },
+    {
+      "key": "userBPassword",
+      "value": ""
+    },
+    {
+      "key": "userAEmail",
+      "value": ""
+    },
+    {
+      "key": "userBEmail",
+      "value": ""
+    },
+    {
+      "key": "weeklyGoal",
+      "value": ""
+    },
+    {
+      "key": "userAToken",
+      "value": ""
+    },
+    {
+      "key": "userASessionId",
+      "value": ""
+    }
+  ]
+}

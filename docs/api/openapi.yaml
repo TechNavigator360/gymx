@@ -1,0 +1,656 @@
+openapi: 3.0.3
+info:
+  title: GYMX API
+  version: 1.0.0
+  description: |
+    REST API for the GYMX full-stack web application.
+
+    The API preserves the existing authentication, training-session,
+    weekly-goal, and progress endpoints and adds endpoints for training
+    streaks, user preferences, and gym occupancy.
+
+    Logout is handled client-side by removing the JWT. The API does not
+    maintain server-side sessions and therefore exposes no logout endpoint.
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+  - url: https://{host}/api
+    description: Deployed environment
+    variables:
+      host:
+        default: example.com
+        description: Deployment host configured through the deployment environment
+
+tags:
+  - name: Authentication
+    description: Registration, login, and authenticated-user operations
+  - name: Training Sessions
+    description: Management of completed training sessions
+  - name: Weekly Goal
+    description: Management of the authenticated user's weekly goal
+  - name: Progress
+    description: Calculated progress for the current calendar week
+  - name: Training Streak
+    description: Current persisted training streak
+  - name: Preferences
+    description: User application preferences
+  - name: Occupancy
+    description: Current occupancy from the external Access Control System
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      operationId: registerUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthCredentials'
+            example:
+              email: user@example.com
+              password: Password123!
+      responses:
+        '201':
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              example:
+                message: User registered successfully
+                user:
+                  id: 1003
+                  email: user@example.com
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate a user
+      operationId: loginUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthCredentials'
+            example:
+              email: user@example.com
+              password: Password123!
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+                user:
+                  id: 1003
+                  email: user@example.com
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Retrieve the authenticated user
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Authenticated user returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /sessions:
+    post:
+      tags: [Training Sessions]
+      summary: Register a training session
+      operationId: createTrainingSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingSessionCreate'
+            example:
+              date: '2026-07-18'
+      responses:
+        '201':
+          description: Training session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingSession'
+              example:
+                id: 1027
+                user_id: 1003
+                date: '2026-07-18T00:00:00.000Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags: [Training Sessions]
+      summary: Retrieve training sessions
+      operationId: listTrainingSessions
+      parameters:
+        - name: week
+          in: query
+          required: false
+          description: Use `current` to retrieve sessions from the current calendar week.
+          schema:
+            type: string
+            enum: [current]
+      responses:
+        '200':
+          description: Training sessions returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrainingSession'
+              example:
+                - id: 10
+                  user_id: 1003
+                  date: '2026-07-18'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /sessions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      tags: [Training Sessions]
+      summary: Retrieve a specific training session
+      operationId: getTrainingSession
+      responses:
+        '200':
+          description: Training session returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Training Sessions]
+      summary: Delete a training session
+      operationId: deleteTrainingSession
+      responses:
+        '204':
+          description: Training session deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /weekly-goal:
+    get:
+      tags: [Weekly Goal]
+      summary: Retrieve the weekly goal
+      operationId: getWeeklyGoal
+      responses:
+        '200':
+          description: Weekly goal returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyGoal'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Weekly Goal]
+      summary: Create a weekly goal
+      operationId: createWeeklyGoal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeeklyGoalInput'
+            example:
+              target_sessions: 3
+      responses:
+        '201':
+          description: Weekly goal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyGoal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    patch:
+      tags: [Weekly Goal]
+      summary: Update the weekly goal
+      operationId: updateWeeklyGoal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WeeklyGoalInput'
+            example:
+              target_sessions: 5
+      responses:
+        '200':
+          description: Weekly goal updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyGoal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /progress/current-week:
+    get:
+      tags: [Progress]
+      summary: Retrieve current-week progress
+      operationId: getCurrentWeekProgress
+      responses:
+        '200':
+          description: Current-week progress returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Progress'
+              example:
+                completedSessions: 2
+                weeklyGoal: 3
+                remainingSessions: 1
+                weekStart: '2026-07-13'
+                weekEnd: '2026-07-19'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /streak:
+    get:
+      tags: [Training Streak]
+      summary: Retrieve the current training streak
+      description: |
+        Returns the authenticated user's current streak. The streak is maintained
+        internally by the backend and cannot be modified directly through the API.
+      operationId: getTrainingStreak
+      responses:
+        '200':
+          description: Training streak returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingStreak'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /preferences:
+    get:
+      tags: [Preferences]
+      summary: Retrieve user preferences
+      operationId: getUserPreferences
+      responses:
+        '200':
+          description: User preferences returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [Preferences]
+      summary: Update user preferences
+      operationId: updateUserPreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+            example:
+              show_streak: false
+      responses:
+        '200':
+          description: User preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /occupancy:
+    get:
+      tags: [Occupancy]
+      summary: Retrieve current gym occupancy
+      description: Returns occupancy information from the simulated external Access Control System.
+      operationId: getOccupancy
+      responses:
+        '200':
+          description: Occupancy information returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Occupancy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    SessionId:
+      name: id
+      in: path
+      required: true
+      description: Training session identifier
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+
+  schemas:
+    AuthCredentials:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: Password123!
+
+    UserSummary:
+      type: object
+      additionalProperties: false
+      required: [id, email]
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1003
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: user@example.com
+
+    User:
+      allOf:
+        - $ref: '#/components/schemas/UserSummary'
+        - type: object
+          additionalProperties: false
+          required: [show_streak]
+          properties:
+            show_streak:
+              type: boolean
+              default: true
+
+    RegisterResponse:
+      type: object
+      additionalProperties: false
+      required: [message, user]
+      properties:
+        message:
+          type: string
+          example: User registered successfully
+        user:
+          $ref: '#/components/schemas/UserSummary'
+
+    LoginResponse:
+      type: object
+      additionalProperties: false
+      required: [token, user]
+      properties:
+        token:
+          type: string
+          description: JWT used for subsequent authenticated requests
+        user:
+          $ref: '#/components/schemas/UserSummary'
+
+    TrainingSessionCreate:
+      type: object
+      additionalProperties: false
+      required: [date]
+      properties:
+        date:
+          type: string
+          format: date
+          example: '2026-07-18'
+
+    TrainingSession:
+      type: object
+      additionalProperties: false
+      required: [id, user_id, date]
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 10
+        user_id:
+          type: integer
+          format: int32
+          example: 1003
+        date:
+          type: string
+          description: Completed training-session date. Existing responses may serialize this as a date-time.
+          oneOf:
+            - type: string
+              format: date
+            - type: string
+              format: date-time
+          example: '2026-07-18'
+
+    WeeklyGoalInput:
+      type: object
+      additionalProperties: false
+      required: [target_sessions]
+      properties:
+        target_sessions:
+          type: integer
+          minimum: 1
+          maximum: 7
+          example: 3
+
+    WeeklyGoal:
+      type: object
+      additionalProperties: false
+      required: [user_id, target_sessions]
+      properties:
+        user_id:
+          type: integer
+          format: int32
+          example: 1003
+        target_sessions:
+          type: integer
+          minimum: 1
+          maximum: 7
+          example: 3
+
+    Progress:
+      type: object
+      additionalProperties: false
+      required:
+        - completedSessions
+        - weeklyGoal
+        - remainingSessions
+        - weekStart
+        - weekEnd
+      properties:
+        completedSessions:
+          type: integer
+          minimum: 0
+          example: 2
+        weeklyGoal:
+          type: integer
+          minimum: 1
+          maximum: 7
+          example: 3
+        remainingSessions:
+          type: integer
+          minimum: 0
+          example: 1
+        weekStart:
+          type: string
+          format: date
+          description: Monday of the current calendar week
+          example: '2026-07-13'
+        weekEnd:
+          type: string
+          format: date
+          description: Sunday of the current calendar week
+          example: '2026-07-19'
+
+    TrainingStreak:
+      type: object
+      additionalProperties: false
+      required: [current_streak]
+      properties:
+        current_streak:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 8
+
+    UserPreferences:
+      type: object
+      additionalProperties: false
+      required: [show_streak]
+      properties:
+        show_streak:
+          type: boolean
+          default: true
+          example: true
+
+    Occupancy:
+      type: object
+      additionalProperties: false
+      required: [status, last_updated]
+      properties:
+        status:
+          type: string
+          description: Current occupancy category supplied by the Access Control System integration
+          example: moderate
+        last_updated:
+          type: string
+          format: date-time
+          example: '2026-07-18T14:25:00Z'
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: The supplied request is invalid.
+
+  responses:
+    BadRequest:
+      description: Invalid request or validation failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: VALIDATION_ERROR
+            message: The supplied request is invalid.
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: AUTHENTICATION_ERROR
+            message: Authentication is required.
+    Forbidden:
+      description: The authenticated user is not allowed to access the resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: AUTHORIZATION_ERROR
+            message: Access to this resource is forbidden.
+    NotFound:
+      description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: RESOURCE_NOT_FOUND
+            message: The requested resource was not found.
+    Conflict:
+      description: Resource already exists or conflicts with the current state
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: RESOURCE_CONFLICT
+            message: The resource already exists.
+    ServiceUnavailable:
+      description: External occupancy information is temporarily unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: OCCUPANCY_UNAVAILABLE
+            message: Occupancy information is temporarily unavailable.

@@ -20,6 +20,12 @@ const createUser = async (email, passwordHash) => {
         data: {
             email,
             password_hash: passwordHash,
+            streak: {
+                create: {
+                    current_streak: 0,
+                    last_evaluated_week: null,
+                },
+            },
         },
         select: {
             id: true,

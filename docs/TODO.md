@@ -1,14 +1,36 @@
 # GYMX Full-Stack TODO
 
-## Repository setup
+## Current status
 
-- [ ] Initialise the new root Git repository.
-- [ ] Create a root `.gitignore`.
-- [ ] Create a root `README.md`.
+The full-stack repository has been initialised and the backend has been migrated from SQL Server to PostgreSQL.
+
+The PostgreSQL migration has been verified against the existing Postman/Newman integration suite:
+
+- 22 requests executed
+- 64 assertions passed
+- 0 failures
+- Authentication, ownership, sessions, weekly goals and progress verified
+- Incorrect HTTP method in the cross-user delete test corrected
+- Temporary assessment failure in `GET /api/auth/me` restored
+- Migration and verification branches merged into `main`
+- Obsolete branches removed locally and remotely
+
+The current `main` branch is the verified PostgreSQL baseline for subsequent feature development.
+
+---
+
+# Repository setup
+
+- [x] Initialise the new root Git repository.
+- [x] Create a root `.gitignore`.
+- [ ] Create or expand the root `README.md`.
 - [ ] Decide whether to use npm workspaces.
 - [ ] Add root scripts for frontend and backend commands.
-- [ ] Remove legacy repositories from the final repository before the first commit.
+- [x] Remove legacy repositories from the final repository before the first commit.
 - [ ] Remove temporary tree files when no longer needed.
+- [x] Establish a feature-branch and verification-branch workflow.
+- [x] Merge the PostgreSQL migration and verification work into `main`.
+- [x] Remove obsolete migration branches after merging.
 
 ---
 
@@ -74,29 +96,45 @@
 
 # Backend
 
-## Database
+## PostgreSQL migration
 
-- [ ] Replace SQL Server with PostgreSQL.
-- [ ] Create a new Prisma migration history for PostgreSQL.
+- [x] Replace SQL Server with PostgreSQL.
+- [x] Update the Prisma provider to PostgreSQL.
+- [x] Create a new Prisma migration history for PostgreSQL.
+- [x] Create the initial PostgreSQL schema migration.
+- [x] Apply the PostgreSQL migration.
+- [x] Validate the Prisma schema.
+- [x] Confirm that the PostgreSQL database schema is up to date.
+- [x] Verify existing backend behaviour against PostgreSQL.
+- [x] Record the migration in the implementation log.
+
+## Database extensions
+
 - [ ] Update the Prisma `User` model with `show_streak`.
-- [ ] Add the `TrainingStreak` Prisma model.
-- [ ] Add the required relationships and referential actions.
-- [ ] Apply the PostgreSQL migration.
+- [x] Add the `TrainingStreak` Prisma model.
+- [x] Add the required relationships and referential actions.
+- [ ] Create and apply the streak/preferences migration.
 - [ ] Migrate existing users to include the default `show_streak` value.
 - [ ] Update seed data if seed data is retained.
 - [ ] Ensure `password_hash` is never returned by the API.
 
 ## Existing endpoint alignment
 
-- [ ] Preserve all existing API endpoints.
-- [ ] Preserve `GET /api/sessions?week=current`.
-- [ ] Preserve the current progress response structure.
+- [x] Preserve all existing API endpoints during the PostgreSQL migration.
+- [x] Preserve `GET /api/sessions?week=current`.
+- [x] Preserve the current progress response structure.
+- [x] Verify authentication against PostgreSQL.
+- [x] Verify session creation, retrieval and deletion against PostgreSQL.
+- [x] Verify ownership restrictions against PostgreSQL.
+- [x] Verify weekly-goal operations against PostgreSQL.
+- [x] Verify progress calculations against PostgreSQL.
 - [ ] Extend `GET /api/auth/me` with `show_streak`.
-- [ ] Verify existing request and response field names against `openapi.yaml`.
+- [ ] Verify all implemented request and response field names against `openapi.yaml`.
 
 ## Streak
 
-- [ ] Finalise streak rules.
+- [x] Finalise streak rules.
+- [x] Define the week representation used by streak evaluation.
 - [ ] Implement streak repository operations.
 - [ ] Implement streak evaluation logic.
 - [ ] Ensure only completed Monday-to-Sunday weeks are evaluated.
@@ -127,15 +165,27 @@
 
 ## Testing and configuration
 
-- [ ] Add automated backend integration tests using Jest and Supertest.
+- [x] Locate and review the existing Postman/Newman integration suites.
+- [x] Run the deployed integration collection against the local backend.
+- [x] Configure Newman to use a local `baseUrl`.
+- [x] Run all existing endpoint tests as PostgreSQL regression tests.
+- [x] Verify the complete regression run with zero failures.
+- [x] Correct the cross-user delete test from `GET` to `DELETE`.
+- [x] Restore the intentionally invalid assessment status code in `/api/auth/me`.
+- [ ] Add a local Newman script to `package.json`.
+- [ ] Replace the placeholder `npm test` script with a real test command.
+- [ ] Rename or replace `test:azure`.
+- [ ] Separate local and deployed Newman commands.
+- [ ] Remove remaining Azure-specific assumptions from the Postman collection.
+- [ ] Add missing negative cases from the older integration collection.
+- [ ] Make date-dependent Postman scenarios deterministic.
+- [ ] Add exact contract assertions instead of permissive status-code assertions.
 - [ ] Add tests for `show_streak` in `/api/auth/me`.
 - [ ] Add tests for the streak endpoint and streak evaluation.
 - [ ] Add tests for preference retrieval and updates.
 - [ ] Add tests for occupancy success and failure responses.
-- [ ] Run all existing endpoint tests as regression tests.
-- [ ] Replace placeholder `npm test` script with real tests.
-- [ ] Remove or replace `test:azure`.
-- [ ] Generalise the Postman collection.
+- [ ] Decide whether Jest/Supertest adds sufficient value beyond Newman.
+- [ ] Add Jest/Supertest integration tests if selected.
 - [ ] Review concurrent-user smoke test for PostgreSQL.
 - [ ] Review CORS configuration after frontend/backend integration.
 - [ ] Review Dockerfile for the combined deployment.
@@ -188,15 +238,20 @@
 - [x] Create database design.
 - [x] Create API specification.
 - [x] Create OpenAPI artefact.
+- [x] Create the deployment guide structure.
+- [x] Create an engineering-journal implementation log.
+- [x] Document the SQL Server-to-PostgreSQL migration in the implementation log.
+- [x] Record PostgreSQL migration verification results.
 - [ ] Add the `openapi.yaml` reference to `05-api-specification.md`.
 - [ ] Link the Architecture, Database Design, API Specification, OpenAPI and Deployment Guide together.
 - [ ] Create deployment diagram after hosting is selected.
 - [ ] Record significant architecture decisions using ADRs.
-- [ ] Document the SQL Server-to-PostgreSQL migration.
+- [ ] Create an ADR for replacing SQL Server with PostgreSQL.
 - [ ] Document the external Access Control System simulation.
-- [ ] Create the deployment guide.
+- [ ] Complete the deployment guide after hosting is selected.
 - [ ] Document deployment and rollback.
 - [ ] Update the project README with local development instructions.
+- [ ] Update the project README with backend test instructions.
 - [ ] Update the project README with deployment instructions.
 - [ ] Add screenshots of the completed application.
 
@@ -227,16 +282,19 @@
 - [ ] Review naming consistency across frontend, backend and API (`snake_case` vs `camelCase`).
 - [ ] Refactor duplicated business logic where appropriate.
 - [ ] Remove obsolete prototype code after backend integration.
+- [ ] Remove outdated Azure-specific code and configuration when the replacement deployment is operational.
+- [ ] Review test names to ensure they match the actual HTTP method and behaviour.
+- [ ] Ensure automated test commands fail when assertions fail.
 
 ---
 
 # Domain
 
-- [ ] Decide between a GYMX-specific domain and a personal portfolio domain.
-- [ ] Check domain availability.
-- [ ] Check renewal pricing.
+- [ ] Confirm whether GYMX will use a subdomain of `jackiejives.nl` or `jackiejives.com`.
+- [x] Confirm that an existing personal portfolio domain can host multiple applications using subdomains.
+- [x] Confirm that creating subdomains does not normally require purchasing additional domains.
+- [ ] Select the final GYMX hostname.
 - [ ] Check possible name or trademark conflicts.
-- [ ] Register the chosen domain if a new domain is selected.
 - [ ] Configure DNS after hosting is selected.
 
 ---

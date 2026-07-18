@@ -108,3 +108,44 @@ Future work—including streak calculations, occupancy simulation, deployment, a
 8f06aa5
 refactor database from SQL Server to PostgreSQL
 ```
+
+# PostgreSQL Migration Verification
+
+## Objective
+
+Verify that migrating the backend from SQL Server to PostgreSQL preserved all existing application behaviour.
+
+## Motivation
+
+Changing the persistence layer is a high-impact architectural change. Before introducing new functionality, the migrated backend needed to demonstrate behavioural parity with the previous implementation.
+
+## Changes
+
+- Executed Prisma validation.
+- Verified migration status.
+- Adapted the Postman/Newman regression suite for local execution.
+- Executed the complete integration suite against the PostgreSQL database.
+- Corrected an issue in the regression suite where an authorization test intended for DELETE requests mistakenly executed a GET request.
+
+## Challenges Encountered
+
+One endpoint intentionally returned HTTP 600 from a previous deployment assessment exercise. After restoring the correct implementation, the regression suite completed successfully.
+
+## Validation
+
+- Prisma schema validation passed.
+- Database migration status confirmed.
+- 22 requests executed.
+- 64 assertions passed.
+- Average response time: 17 ms.
+
+## Architectural Impact
+
+This verification establishes PostgreSQL as the new persistence baseline. Future feature development (such as Training Streaks) can proceed with confidence that the migration itself introduced no behavioural regressions.
+
+## Related Commit
+
+```
+3fd5650
+verify PostgreSQL migration with integration regression suite
+```

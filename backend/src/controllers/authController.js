@@ -67,7 +67,7 @@ const login = async (req, res) => {
 // Returns the authenticated user's identity.
 // The user id is added to req.user by the auth middleware.
 const getMe = async (req, res) => {
-    return res.status(600).json({
+    return res.status(200).json({
         user: {
             id: req.user.id,
         },

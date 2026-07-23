@@ -42,6 +42,22 @@ const findSessionsByUserId = async (userId, startDate, endDate) => {
     });
 };
 
+const findFirstSessionByUserId = async (userId) => {
+    return await prisma.trainingSession.findFirst({
+        where: {
+            user_id: userId,
+        },
+        orderBy: [
+            {
+                date: "asc",
+            },
+            {
+                id: "asc",
+            },
+        ],
+    });
+};
+
 const deleteSessionById = async (sessionId) => {
     return await prisma.trainingSession.delete({
         where: {
@@ -54,5 +70,6 @@ module.exports = {
     createSession,
     findSessionById,
     findSessionsByUserId,
+    findFirstSessionByUserId,
     deleteSessionById,
 };

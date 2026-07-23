@@ -1,13 +1,11 @@
-// Returns the start and end date of the current week.
-// Week starts on Monday and ends on Sunday.
-const getCurrentWeekRange = () => {
-    const now = new Date();
-
-    const currentDay = now.getDay();
+// Returns the start and end date of the Monday-to-Sunday week
+// containing the supplied date.
+const getWeekRange = (date) => {
+    const currentDay = date.getDay();
     const daysSinceMonday = currentDay === 0 ? 6 : currentDay -1;
 
-    const startDate = new Date(now);
-    startDate.setDate(now.getDate() - daysSinceMonday);
+    const startDate = new Date(date);
+    startDate.setDate(startDate.getDate() - daysSinceMonday);
     startDate.setHours(0, 0, 0, 0);
 
     const endDate = new Date(startDate);
@@ -16,8 +14,21 @@ const getCurrentWeekRange = () => {
 
     return {
         startDate,
-        endDate,
+        endDate
     };
+};
+
+// Returns the start and end date of the current week.
+const getCurrentWeekRange = () => {
+    return getWeekRange(new Date());
+};
+
+// Returns a new Date moved by the supplied number of weeks.
+const addWeeks = (date, numberOfWeeks) => {
+    const result = new Date(date);
+    result.setDate(result.getDate() + numberOfWeeks * 7);
+
+    return result;
 };
 
 // Formats a Date object as YYYY-MM-DD using local time.
@@ -31,5 +42,7 @@ const formatDateOnly = (date) => {
 
 module.exports = {
     getCurrentWeekRange,
+    getWeekRange,
+    addWeeks,
     formatDateOnly,
 };

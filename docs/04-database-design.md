@@ -33,6 +33,7 @@ The Domain Analysis identified the following concepts:
 | User | Persistent identity with independent lifecycle | Entity |
 | Training Session | Persistent record of completed gym visits | Entity |
 | Weekly Goal | Persistent user configuration | Entity |
+| Weekly Goal Result | Persistent final outcome for one user and completed calendar week | Entity |
 | Training Streak | Persisted to optimise performance and avoid recalculating historical weeks | Entity |
 | Progress | Calculated from Training Sessions and Weekly Goal | Derived Concept |
 | Occupancy | Immutable snapshot retrieved from an external system | Value Object |
@@ -47,6 +48,7 @@ Applying the identification method resulted in the following entities being incl
 - User
 - Training Session
 - Weekly Goal
+- Weekly Goal Result
 - Training Streak
 
 The following concepts were intentionally excluded from the ERD:
@@ -66,9 +68,8 @@ The following indexes and referential actions are applied to support query perfo
 | User | email | UNIQUE INDEX | Prevents duplicate user accounts and supports authentication. |
 | TrainingSession | user_id, date | COMPOSITE INDEX | Supports efficient retrieval of a user's training sessions and weekly progress calculations. |
 | WeeklyGoal | user_id | PRIMARY KEY / UNIQUE | Enforces one weekly goal per user. |
+| WeeklyGoalResult | user_id, week_start | COMPOSITE PRIMARY KEY | Enforces one final weekly outcome per user and calendar week. |
 | TrainingStreak | user_id | PRIMARY KEY / UNIQUE | Enforces one training streak record per user. |
-
-### Referential Actions
 
 ### Referential Actions
 
@@ -76,6 +77,7 @@ The following indexes and referential actions are applied to support query perfo
 |---|---|---|---|
 | `TrainingSession.user_id` → `User.id` | CASCADE | NO ACTION | Training sessions depend on the user, while primary key values are treated as stable. |
 | `WeeklyGoal.user_id` → `User.id` | CASCADE | NO ACTION | The weekly goal depends on the user, while primary key values are treated as stable. |
+| `WeeklyGoalResult.user_id` → `User.id` | CASCADE | NO ACTION | Weekly outcomes depend on the user and have no independent lifecycle. |
 | `TrainingStreak.user_id` → `User.id` | CASCADE | NO ACTION | The streak state depends on the user, while primary key values are treated as stable. |
 
 ## Design Implications
@@ -84,11 +86,11 @@ As illustrated in Figure 1, the physical data model further specifies the identi
 
 A composite index on `TrainingSession(user_id, date)` is added to support efficient retrieval of a user's training sessions and date-range queries used for weekly progress calculations.
 
-`ON DELETE CASCADE` is applied to the foreign key relationships from `TrainingSession`, `WeeklyGoal`, and `TrainingStreak` to `User`. These entities are fully dependent on the user and have no meaning without the associated user account. When a user is deleted, all related training sessions, weekly goal data, and streak data must therefore also be deleted.
+`ON DELETE CASCADE` is applied to the foreign key relationships from `TrainingSession`, `WeeklyGoal`, `WeeklyGoalResult`, and `TrainingStreak` to `User`. These entities are fully dependent on the user and have no meaning without the associated user account. When a user is deleted, all related training sessions, weekly goal data, weekly outcomes, and streak data must therefore also be deleted.
 
 `ON UPDATE NO ACTION` is applied to the foreign key relationships because primary key values are treated as stable identifiers and should not be changed after creation.
 
-The database design decisions are directly traceable to the Domain Analysis and the functional requirements. Based on this analysis, the persistent entities `User`, `TrainingSession`, `WeeklyGoal`, and `TrainingStreak` were identified together with their relationships.
+The database design decisions are directly traceable to the Functional Specification, Domain Analysis, and functional requirements. Based on this analysis, the persistent entities `User`, `TrainingSession`, `WeeklyGoal`, `WeeklyGoalResult`, and `TrainingStreak` were identified together with their relationships.
 
 Primary keys and foreign keys are specified as follows:
 
@@ -96,19 +98,30 @@ Primary keys and foreign keys are specified as follows:
 - `TrainingSession.id` is the primary key of `TrainingSession`.
 - `TrainingSession.user_id` is a foreign key referencing `User.id`.
 - `WeeklyGoal.user_id` is both the primary key and a foreign key referencing `User.id`.
+- `WeeklyGoalResult` uses (`user_id`, `week_start`) as its composite primary key, with `user_id` also referencing `User.id`.
 - `TrainingStreak.user_id` is both the primary key and a foreign key referencing `User.id`.
 
 Using `user_id` as both primary key and foreign key in `WeeklyGoal` and `TrainingStreak` enforces that a user can have at most one weekly goal and at most one training streak record.
+
+`WeeklyGoal` stores the active `target_sessions` together with nullable
+`pending_target_sessions` and `pending_effective_date`. The first target is
+active immediately. Later changes remain pending until their effective Monday.
+
+`WeeklyGoalResult` stores only `goal_reached` in addition to its composite key.
+The target and session count used during finalization are intentionally not
+duplicated. Completed-week sessions are immutable, so the Boolean outcome is
+final and does not require recalculation.
 
 The design decisions align with the defined domain rules:
 
 - A training session belongs to exactly one user.
 - A user may have multiple training sessions.
 - A user may have at most one weekly goal.
+- A user may have multiple weekly goal results but at most one result for each calendar week.
 - A user may have at most one training streak record.
-- Training sessions, weekly goals, and training streaks cannot exist without an associated user.
+- Training sessions, weekly goals, weekly goal results, and training streaks cannot exist without an associated user.
 
-As shown in Figure 1, these rules are translated into a non-identifying relationship between `User` and `TrainingSession`, and identifying relationships between `User` and both `WeeklyGoal` and `TrainingStreak`. The cardinalities and dependencies are explicitly enforced through the database constraints.
+As shown in Figure 1, these rules are translated into non-identifying one-to-many relationships from `User` to `TrainingSession` and `WeeklyGoalResult`, and identifying one-to-zero-or-one relationships between `User` and both `WeeklyGoal` and `TrainingStreak`. The cardinalities and dependencies are explicitly enforced through the database constraints.
 
 # Entity Relationship Diagram
 

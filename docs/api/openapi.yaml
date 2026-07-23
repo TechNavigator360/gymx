@@ -7,7 +7,8 @@ info:
 
     The API preserves the existing authentication, training-session,
     weekly-goal, and progress endpoints and adds endpoints for training
-    streaks, user preferences, and gym occupancy.
+    streaks, explainable weekly streak history, user preferences, and gym
+    occupancy.
 
     Logout is handled client-side by removing the JWT. The API does not
     maintain server-side sessions and therefore exposes no logout endpoint.
@@ -25,13 +26,13 @@ tags:
   - name: Authentication
     description: Registration, login, and authenticated-user operations
   - name: Training Sessions
-    description: Management of completed training sessions
+    description: Registration and retrieval of completed training sessions
   - name: Weekly Goal
-    description: Management of the authenticated user's weekly goal
+    description: Management of active and pending weekly targets
   - name: Progress
     description: Calculated progress for the current calendar week
   - name: Training Streak
-    description: Current persisted training streak
+    description: Current persisted training streak and finalized weekly history
   - name: Preferences
     description: User application preferences
   - name: Occupancy
@@ -124,6 +125,9 @@ paths:
     post:
       tags: [Training Sessions]
       summary: Register a training session
+      description: |
+        Registers a completed training session for the authenticated user.
+        A weekly goal must exist before a session can be registered.
       operationId: createTrainingSession
       requestBody:
         required: true
@@ -148,6 +152,15 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: No weekly goal is configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: WEEKLY_GOAL_REQUIRED
+                message: Set a weekly target before registering a training session.
     get:
       tags: [Training Sessions]
       summary: Retrieve training sessions
@@ -198,7 +211,11 @@ paths:
           $ref: '#/components/responses/NotFound'
     delete:
       tags: [Training Sessions]
-      summary: Delete a training session
+      summary: Undo an eligible training-session check-in
+      description: |
+        Legacy deletion route that will be narrowed to the Undo last check-in
+        contract. Only the latest eligible session from the current incomplete
+        week may be removed. Sessions from completed weeks are immutable.
       operationId: deleteTrainingSession
       responses:
         '204':
@@ -209,6 +226,15 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: The session is not eligible for undo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: SESSION_NOT_ELIGIBLE_FOR_UNDO
+                message: Only the latest eligible check-in from the current week can be undone.
 
   /weekly-goal:
     get:
@@ -229,6 +255,9 @@ paths:
     post:
       tags: [Weekly Goal]
       summary: Create a weekly goal
+      description: |
+        Creates the authenticated user's first weekly goal. The first target
+        takes effect immediately and enables training-session registration.
       operationId: createWeeklyGoal
       requestBody:
         required: true
@@ -253,7 +282,12 @@ paths:
           $ref: '#/components/responses/Conflict'
     patch:
       tags: [Weekly Goal]
-      summary: Update the weekly goal
+      summary: Schedule a weekly-goal change
+      description: |
+        Requests a new target for the authenticated user. The current target
+        remains active for the current week. The requested target becomes
+        effective on the following Monday. A later request before activation
+        replaces the earlier pending target.
       operationId: updateWeeklyGoal
       requestBody:
         required: true
@@ -265,11 +299,16 @@ paths:
               target_sessions: 5
       responses:
         '200':
-          description: Weekly goal updated
+          description: Weekly-goal change scheduled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/WeeklyGoal'
+              example:
+                user_id: 1003
+                target_sessions: 3
+                pending_target_sessions: 5
+                pending_effective_date: '2026-07-27'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -305,8 +344,11 @@ paths:
       tags: [Training Streak]
       summary: Retrieve the current training streak
       description: |
-        Returns the authenticated user's current streak. The streak is maintained
-        internally by the backend and cannot be modified directly through the API.
+        Lazily finalizes completed unevaluated weeks in chronological order,
+        then returns the authenticated user's persisted current streak. Each
+        completed week affects the streak exactly once. The current incomplete
+        week never increments or resets the streak. The streak cannot be
+        modified directly through the API.
       operationId: getTrainingStreak
       responses:
         '200':
@@ -315,6 +357,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TrainingStreak'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /streak/history:
+    get:
+      tags: [Training Streak]
+      summary: Retrieve finalized weekly streak history
+      description: |
+        Performs lazy catch-up, then returns the authenticated user's evaluated
+        completed weeks ordered newest first. The current incomplete week is
+        excluded. The applicable target and reached/not-reached outcome are
+        persisted; session_count is derived from immutable training sessions.
+
+        This contract is settled. Implementation is deferred until the
+        frontend requires the history view.
+      operationId: getTrainingStreakHistory
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Number of weekly results to return. Defaults to 12.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 52
+            default: 12
+        - name: cursor
+          in: query
+          required: false
+          description: Opaque cursor returned by the preceding page.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Finalized weekly streak history returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingStreakHistoryPage'
+              example:
+                results:
+                  - week_start: '2026-07-13'
+                    target_sessions: 3
+                    session_count: 4
+                    goal_reached: true
+                  - week_start: '2026-07-06'
+                    target_sessions: 3
+                    session_count: 2
+                    goal_reached: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -506,7 +602,11 @@ components:
     WeeklyGoal:
       type: object
       additionalProperties: false
-      required: [user_id, target_sessions]
+      required:
+        - user_id
+        - target_sessions
+        - pending_target_sessions
+        - pending_effective_date
       properties:
         user_id:
           type: integer
@@ -516,7 +616,21 @@ components:
           type: integer
           minimum: 1
           maximum: 7
+          description: Target currently in effect.
           example: 3
+        pending_target_sessions:
+          type: integer
+          minimum: 1
+          maximum: 7
+          nullable: true
+          description: Target scheduled for the next effective Monday, or null.
+          example: 5
+        pending_effective_date:
+          type: string
+          format: date
+          nullable: true
+          description: Monday on which the pending target becomes active, or null.
+          example: '2026-07-27'
 
     Progress:
       type: object
@@ -555,13 +669,63 @@ components:
     TrainingStreak:
       type: object
       additionalProperties: false
-      required: [current_streak]
+      required: [current_streak, last_evaluated_week]
       properties:
         current_streak:
           type: integer
           minimum: 0
           default: 0
           example: 8
+        last_evaluated_week:
+          type: string
+          format: date
+          nullable: true
+          description: Monday of the most recently finalized week, or null when no week has been finalized.
+          example: '2026-07-13'
+
+    WeeklyGoalResult:
+      type: object
+      additionalProperties: false
+      required:
+        - week_start
+        - target_sessions
+        - session_count
+        - goal_reached
+      properties:
+        week_start:
+          type: string
+          format: date
+          description: Monday of the evaluated completed week.
+          example: '2026-07-13'
+        target_sessions:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: Historical target used to finalize the week.
+          example: 3
+        session_count:
+          type: integer
+          minimum: 0
+          description: Count derived from immutable training sessions; not duplicated in WeeklyGoalResult storage.
+          example: 4
+        goal_reached:
+          type: boolean
+          description: Whether session_count met or exceeded target_sessions.
+          example: true
+
+    TrainingStreakHistoryPage:
+      type: object
+      additionalProperties: false
+      required: [results, next_cursor]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyGoalResult'
+        next_cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor for the next page, or null when no later page exists.
 
     UserPreferences:
       type: object

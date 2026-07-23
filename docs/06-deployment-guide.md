@@ -43,7 +43,7 @@ The frontend communicates exclusively with the backend API.
 
 The backend is responsible for business logic, authentication, persistence and communication with external systems.
 
-The PostgreSQL database stores all application data, including users, training sessions, weekly goals and training streaks.
+The PostgreSQL database stores all application data, including users, training sessions, active and pending weekly-goal state, immutable weekly goal outcomes and training streaks.
 
 The Access Control System is an external service that provides occupancy information. It is not owned or deployed as part of GYMX.
 
@@ -149,6 +149,16 @@ Database schema changes are managed using Prisma Migrate.
 Whenever a deployment contains database changes, migrations should be executed automatically before the new application version begins serving requests.
 
 Migration failures should abort the deployment.
+
+The streak feature requires a migration that:
+
+- adds nullable pending-target and effective-date fields to `WeeklyGoal`;
+- creates `WeeklyGoalResult` with a composite key on
+  (`user_id`, `week_start`);
+- applies cascading ownership cleanup from `User` to weekly results.
+
+This migration must complete before application code that reads or writes
+pending targets or finalized weekly outcomes begins serving requests.
 
 ---
 

@@ -214,7 +214,8 @@ Authorization: Bearer <token>
 
 ### `POST /api/sessions`
 
-Registers a completed training session for the authenticated user.
+Registers a completed training session for the authenticated user. The user
+must already have an active weekly goal.
 
 ### Headers
 
@@ -248,6 +249,7 @@ Content-Type: application/json
 | `201 Created` | Training session created |
 | `400 Bad Request` | Invalid date or request body |
 | `401 Unauthorized` | Authentication required |
+| `409 Conflict` | A weekly goal must be configured before session registration |
 
 ---
 
@@ -339,7 +341,10 @@ Authorization: Bearer <token>
 
 ### `DELETE /api/sessions/{id}`
 
-Deletes a training session belonging to the authenticated user.
+Legacy contract for deleting a training session belonging to the authenticated
+user. This endpoint will be narrowed to Undo last check-in: only the latest
+eligible session from the current incomplete week may be removed. Sessions from
+completed weeks are immutable.
 
 ### Headers
 
@@ -361,6 +366,7 @@ Authorization: Bearer <token>
 | `401 Unauthorized` | Authentication required |
 | `403 Forbidden` | Training session belongs to another user |
 | `404 Not Found` | Training session not found |
+| `409 Conflict` | Session is not eligible for undo |
 
 ---
 
@@ -383,7 +389,9 @@ Authorization: Bearer <token>
 ```json
 {
   "user_id": 1003,
-  "target_sessions": 3
+  "target_sessions": 3,
+  "pending_target_sessions": null,
+  "pending_effective_date": null
 }
 ```
 
@@ -401,7 +409,8 @@ Authorization: Bearer <token>
 
 ### `POST /api/weekly-goal`
 
-Creates a weekly goal for the authenticated user.
+Creates the first weekly goal for the authenticated user. The first goal takes
+effect immediately and enables training session registration.
 
 ### Headers
 
@@ -423,7 +432,9 @@ Content-Type: application/json
 ```json
 {
   "user_id": 1003,
-  "target_sessions": 3
+  "target_sessions": 3,
+  "pending_target_sessions": null,
+  "pending_effective_date": null
 }
 ```
 
@@ -442,7 +453,10 @@ Content-Type: application/json
 
 ### `PATCH /api/weekly-goal`
 
-Updates the weekly goal belonging to the authenticated user.
+Requests a new weekly target for the authenticated user. The current target
+remains active for the current week. The requested value becomes effective on
+the following Monday. A later PATCH before activation replaces the earlier
+pending value.
 
 ### Headers
 
@@ -464,7 +478,9 @@ Content-Type: application/json
 ```json
 {
   "user_id": 1003,
-  "target_sessions": 5
+  "target_sessions": 3,
+  "pending_target_sessions": 5,
+  "pending_effective_date": "2026-07-27"
 }
 ```
 
@@ -525,7 +541,7 @@ Authorization: Bearer <token>
 
 Returns the authenticated user's current training streak.
 
-The streak is maintained internally by the backend based on consecutive completed calendar weeks in which the user's configured weekly goal was achieved.
+The streak is maintained internally by the backend based on consecutive completed calendar weeks in which the user's configured weekly goal was achieved. Before returning, the backend lazily finalizes completed unevaluated weeks in chronological order. Each finalized week stores one immutable reached/not-reached outcome and affects the streak exactly once.
 
 ### Headers
 
@@ -663,6 +679,7 @@ Authorization: Bearer <token>
 | User | Email address is required and must be unique |
 | User | Password is required |
 | Training Session | Date must be a valid ISO 8601 date |
+| Training Session | User must have an active weekly goal before registration |
 | Weekly Goal | `target_sessions` must be an integer between 1 and 7 |
 | Weekly Goal | Only one weekly goal may exist per user |
 | User Preferences | `show_streak` must be a Boolean value |
@@ -741,7 +758,9 @@ Error responses use a consistent JSON structure.
 ```json
 {
   "user_id": 1003,
-  "target_sessions": 3
+  "target_sessions": 3,
+  "pending_target_sessions": 5,
+  "pending_effective_date": "2026-07-27"
 }
 ```
 

@@ -63,7 +63,7 @@ The application shall provide secure user authentication through user registrati
 
 ### Training
 
-Users shall be able to register completed training sessions with minimal effort. In addition, users must be able to remove incorrectly registered training sessions to ensure their training history and progress remain accurate.
+Users shall be able to register completed training sessions with minimal effort after configuring a weekly goal. Users shall be able to remove the latest eligible incorrectly registered training session while the associated calendar week is still in progress. Training sessions belonging to completed weeks are immutable.
 
 ### Dashboard
 
@@ -71,7 +71,7 @@ The dashboard provides a centralized overview of the user's current training con
 
 ### Settings
 
-Users shall be able to configure their personal weekly training goal and choose whether their training streak is displayed within the application. Changes shall be reflected immediately in the user's dashboard and progress calculations.
+Users shall be able to configure their personal weekly training goal and choose whether their training streak is displayed within the application. The first weekly goal takes effect immediately. Later goal changes take effect on the following Monday so the current week's commitment cannot be changed retroactively.
 
 ### Occupancy
 
@@ -106,7 +106,8 @@ The following assumptions apply to the current version of GYMX:
 - Each user manages their own account.
 - Gym occupancy information is obtained from an external Access Control System through a REST API.
 - During development, occupancy is simulated using a representative dataset.
-- A training session represents a completed gym visit.
+- A training streak represents consecutive completed calendar weeks in which the user's configured weekly goal was achieved.
+- Completed calendar weeks are evaluated only once for streak progression.
 - Weekly progress is calculated using calendar weeks (Monday–Sunday).
 
 ---
@@ -165,7 +166,9 @@ The system shall allow an authenticated user to retrieve their profile informati
 
 **Priority:** Must Have
 
-The system shall allow an authenticated user to register a completed training session.
+The system shall allow an authenticated user to register a completed training session only after the user has configured a weekly training goal.
+
+The frontend shall disable the check-in action while no goal exists, and the backend shall reject session creation without an active weekly goal.
 
 ---
 
@@ -173,7 +176,7 @@ The system shall allow an authenticated user to register a completed training se
 
 **Priority:** Must Have
 
-The system shall allow users to delete incorrectly registered training sessions.
+The system shall allow users to undo only the latest eligible incorrectly registered training session belonging to the current calendar week. Training sessions from completed weeks shall not be removable.
 
 ---
 
@@ -201,6 +204,10 @@ The system shall allow users to retrieve their configured weekly training goal.
 
 The system shall allow users to create and update their weekly training goal.
 
+The first goal shall take effect immediately. A later change shall be stored as
+pending and take effect on the following Monday. If the pending value is changed
+again before Monday, the newest valid value shall replace it.
+
 ---
 
 ## 6.4 Progress
@@ -209,7 +216,7 @@ The system shall allow users to create and update their weekly training goal.
 
 **Priority:** Must Have
 
-The system shall calculate and present the user's progress toward their weekly training goal.
+The system shall calculate and present the authenticated user's progress toward the configured weekly training goal for the current calendar week.
 
 ---
 
@@ -219,7 +226,9 @@ The system shall calculate and present the user's progress toward their weekly t
 
 **Priority:** Must Have
 
-The system shall maintain and display the user's current training streak based on consecutive calendar weeks in which the configured weekly goal was achieved.
+The system shall maintain the authenticated user's training streak based on consecutive completed calendar weeks (Monday–Sunday) in which the configured weekly goal was achieved.
+
+Completed weeks shall be evaluated only once. The current incomplete week shall not increase or break the user's training streak.
 
 ---
 
@@ -227,7 +236,7 @@ The system shall maintain and display the user's current training streak based o
 
 **Priority:** Must Have
 
-The system shall allow users to choose whether their training streak is displayed within the application.
+The system shall allow users to choose whether their calculated training streak is displayed within the application. This preference shall not affect streak evaluation or progression.
 
 ---
 
@@ -256,6 +265,65 @@ The system shall display the timestamp supplied by the external Access Control S
 **Priority:** Must Have
 
 The system shall allow users to configure personal application preferences, including the visibility of their training streak.
+
+---
+
+# 6.8 Business Rules
+
+### BR-001 – Calendar Week
+
+A training week starts on Monday and ends on Sunday.
+
+---
+
+### BR-002 – Weekly Progress
+
+Weekly progress is calculated using training sessions registered during the current calendar week.
+
+---
+
+### BR-003 – Goal Before Check-In
+
+A user must have a weekly training goal before registering a training session.
+This rule shall be enforced by both the frontend and backend.
+
+---
+
+### BR-004 – Goal Change Activation
+
+The first weekly goal takes effect immediately. Later changes take effect on the
+following Monday. The current week retains the target under which it began.
+
+---
+
+### BR-005 – Training Streak
+
+A training streak represents consecutive completed calendar weeks in which the configured weekly goal was achieved.
+
+---
+
+### BR-006 – Streak Evaluation
+
+Completed calendar weeks shall be evaluated only once.
+
+---
+
+### BR-007 – Weekly Goal Outcome
+
+Each evaluated completed week shall persist one immutable Boolean outcome
+indicating whether the applicable weekly goal was reached.
+
+---
+
+### BR-008 – Completed Weeks
+
+Training sessions belonging to completed weeks shall be immutable.
+
+---
+
+### BR-009 – Training Streak Visibility
+
+The user's visibility preference affects presentation only and shall not affect streak calculation or persistence.
 
 ---
 
@@ -293,7 +361,7 @@ The application shall follow a layered architecture with clear separation of con
 
 ### NFR-006 – Reliability
 
-The application shall preserve data integrity by validating user input and preventing unauthorized or inconsistent modifications.
+The application shall preserve data integrity by validating user input, preventing unauthorized or inconsistent modifications, and enforcing business rules that maintain the correctness of persisted domain state.
 
 ---
 
@@ -319,6 +387,7 @@ The application shall support automated unit, integration, and end-to-end testin
 
 The following documents provide detailed technical information and evolve alongside the implementation:
 
+- Functional Specification (`docs/GYMX_FUNCTIONAL_SPECIFICATION.md`)
 - Domain Analysis (`docs/domain-analysis.md`)
 - System Architecture (`docs/architecture.md`)
 - Database Design (`docs/database.md`)

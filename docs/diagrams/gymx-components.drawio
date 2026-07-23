@@ -19,12 +19,12 @@
             <mxGeometry height="120" width="240" x="-160" y="40" as="geometry" />
           </mxCell>
         </object>
-        <object placeholders="1" c4Name="Weekly Goals" c4Type="Component" c4Technology="Node.js, Express, Prisma ORM" c4Description="Creates, updates and retrieves users&#39; weekly training goals." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%: %c4Technology%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="bMFJIIj5aRlpNvLdTubA-4">
+        <object placeholders="1" c4Name="Weekly Goals" c4Type="Component" c4Technology="Node.js, Express, Prisma ORM" c4Description="Creates first goals immediately and schedules later target changes for the following Monday." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%: %c4Technology%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="bMFJIIj5aRlpNvLdTubA-4">
           <mxCell parent="1" style="rounded=1;whiteSpace=wrap;html=1;labelBackgroundColor=none;fillColor=#63BEF2;fontColor=#ffffff;align=center;arcSize=6;strokeColor=#2086C9;metaEdit=1;resizable=0;points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];" vertex="1">
             <mxGeometry height="120" width="240" x="120" y="40" as="geometry" />
           </mxCell>
         </object>
-        <object placeholders="1" c4Name="Progress &amp; Streak Calculation" c4Type="Component" c4Technology="Node.js" c4Description="Calculates weekly progress, remaining sessions and current training streak." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%: %c4Technology%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="bMFJIIj5aRlpNvLdTubA-5">
+        <object placeholders="1" c4Name="Progress &amp; Streak Calculation" c4Type="Component" c4Technology="Node.js" c4Description="Calculates progress, finalizes immutable weekly outcomes and updates the current training streak." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%: %c4Technology%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="bMFJIIj5aRlpNvLdTubA-5">
           <mxCell parent="1" style="rounded=1;whiteSpace=wrap;html=1;labelBackgroundColor=none;fillColor=#63BEF2;fontColor=#ffffff;align=center;arcSize=6;strokeColor=#2086C9;metaEdit=1;resizable=0;points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];" vertex="1">
             <mxGeometry height="120" width="240" x="400" y="40" as="geometry" />
           </mxCell>
@@ -44,7 +44,7 @@
             <mxGeometry height="120" width="240" x="120" y="-185" as="geometry" />
           </mxCell>
         </object>
-        <object placeholders="1" c4Name="PostgreSQL Database" c4Type="Container" c4Technology="PostgreSQL" c4Description="Stores users, training sessions, weekly goals and application data." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%:&amp;nbsp;%c4Technology%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;&lt;font color=&quot;#E6E6E6&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="bMFJIIj5aRlpNvLdTubA-9">
+        <object placeholders="1" c4Name="PostgreSQL Database" c4Type="Container" c4Technology="PostgreSQL" c4Description="Stores users, sessions, active and pending goals, weekly outcomes and streak state." label="&lt;font style=&quot;font-size: 16px&quot;&gt;&lt;b&gt;%c4Name%&lt;/b&gt;&lt;/font&gt;&lt;div&gt;[%c4Type%:&amp;nbsp;%c4Technology%]&lt;/div&gt;&lt;br&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;&lt;font color=&quot;#E6E6E6&quot;&gt;%c4Description%&lt;/font&gt;&lt;/div&gt;" id="bMFJIIj5aRlpNvLdTubA-9">
           <mxCell parent="1" style="shape=cylinder3;size=15;whiteSpace=wrap;html=1;boundedLbl=1;rounded=0;labelBackgroundColor=none;fillColor=#23A2D9;fontSize=12;fontColor=#ffffff;align=center;strokeColor=#0E7DAD;metaEdit=1;points=[[0.5,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.5,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];resizable=0;" vertex="1">
             <mxGeometry height="120" width="240" x="-120" y="460" as="geometry" />
           </mxCell>

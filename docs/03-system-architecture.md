@@ -4,7 +4,9 @@
 
 This document describes the technical architecture of GYMX. It defines the major software components, their responsibilities, interactions, and the architectural decisions that guide the implementation of the system.
 
-The architecture translates the business requirements defined in the Project Specification into a maintainable, scalable, and secure software solution.
+The architecture translates the business requirements defined in the Project
+Specification and the authoritative Functional Specification into a
+maintainable, scalable, and secure software solution.
 
 ---
 
@@ -82,9 +84,9 @@ These relationships are illustrated in the System Context Diagram.
 
 # 4. Backend Architecture
 
-The Backend API is organised into a set of logical components, each responsible for a distinct business capability. Responsibilities such as authentication, training management, weekly goals, progress calculation, occupancy integration, and data persistence are separated to promote maintainability, extensibility, and testability.
+The Backend API is organised into a set of logical components, each responsible for a distinct business capability. Responsibilities such as authentication, training management, weekly goals, progress calculation, streak evaluation, occupancy integration, and data persistence are separated to promote maintainability, extensibility, and testability.
 
-Business components interact with the persistence layer to access application data, while external integrations remain isolated within dedicated integration components.
+Business components interact with the persistence layer to access application data, while external integrations remain isolated within dedicated integration components. The streak evaluator finalizes completed weeks chronologically, persists one Boolean weekly outcome for each finalized week, and updates the current streak aggregate. Pending goal changes are activated only after the preceding week has been finalized using its previous target.
 
 The backend architecture is illustrated in the Backend Component Diagram.
 
@@ -132,6 +134,10 @@ The following high-level architectural decisions have been made for the current 
 - PostgreSQL is used as the primary relational database.
 - Prisma ORM provides database abstraction.
 - JWT is used for authentication and authorization.
+- Training session registration requires an existing weekly goal and is enforced by the Backend API.
+- The first weekly goal takes effect immediately; later goal changes are stored as pending until the following Monday.
+- Completed-week streak evaluation uses lazy catch-up and persists one immutable Boolean weekly outcome per user and week.
+- Exactly-once weekly evaluation is a required invariant; its transaction and concurrency mechanism will be finalized with the evaluator design.
 - Gym occupancy is retrieved from an external Access Control System through a dedicated integration component.
 - The MVP targets a single gym deployment while remaining extensible for future expansion.
 

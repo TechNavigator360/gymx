@@ -24,6 +24,8 @@ The following terminology shall be used consistently throughout the project.
 | User | A gym member who uses GYMX to monitor and improve training consistency. |
 | Training Session | A completed gym visit registered by a User. |
 | Weekly Goal | The target number of Training Sessions a User aims to complete during a Calendar Week. |
+| Pending Weekly Goal | A requested replacement target that becomes active on the following Monday. |
+| Weekly Goal Result | The immutable Boolean outcome recording whether a User reached the applicable Weekly Goal in one completed Calendar Week. |
 | Progress | The current completion status of a User's Weekly Goal for the current Calendar Week. |
 | Training Streak | The persisted number of consecutive completed Calendar Weeks in which a User achieved the applicable Weekly Goal. |
 | Calendar Week | A Monday-to-Sunday period used to evaluate Weekly Goals, Progress, and Training Streaks. |
@@ -42,6 +44,7 @@ The following concepts have been identified within the GYMX domain.
 | User | Entity | Represents a gym member and owns the member's training data. |
 | Training Session | Entity | Represents a completed gym visit registered by a User. |
 | Weekly Goal | Entity | Defines the number of Training Sessions a User aims to complete each Calendar Week. |
+| Weekly Goal Result | Entity | Stores the final reached/not-reached outcome for one User and one completed Calendar Week. |
 | Training Streak | Entity | Stores the current number of consecutive completed weeks in which the User achieved the applicable Weekly Goal. |
 | Progress | Derived Concept | Calculated from the current Weekly Goal and the User's Training Sessions within the current Calendar Week. |
 | Calendar Week | Value Object | Represents the Monday-to-Sunday period used in weekly calculations and evaluations. |
@@ -60,11 +63,11 @@ The following events represent meaningful occurrences within the GYMX domain.
 - User Registered
 - Weekly Goal Created
 - Weekly Goal Updated
+- Pending Weekly Goal Activated
 - Training Session Registered
-- Training Session Deleted
+- Training Session Check-In Undone
 - Calendar Week Completed
-- Weekly Goal Achieved
-- Weekly Goal Missed
+- Weekly Goal Result Finalized
 - Training Streak Increased
 - Training Streak Reset
 
@@ -80,14 +83,19 @@ Authentication events and occupancy retrieval events are operational or integrat
 | BR-002 | A User may register multiple Training Sessions. |
 | BR-003 | A User may have no more than one active Weekly Goal. |
 | BR-004 | Progress is calculated from the number of Training Sessions completed during the current Calendar Week and the User's active Weekly Goal. |
-| BR-005 | A Training Streak is evaluated only for a completed Calendar Week. |
-| BR-006 | If the Weekly Goal was achieved during the completed Calendar Week, the persisted Training Streak increases by one. |
-| BR-007 | If the Weekly Goal was not achieved during the completed Calendar Week, the persisted Training Streak resets to zero. |
-| BR-008 | A completed Calendar Week may affect the Training Streak only once. |
-| BR-009 | Deleting a Training Session from the current Calendar Week requires Progress to be recalculated. |
-| BR-010 | Occupancy information is read-only within GYMX and originates from the external Access Control System. |
-| BR-011 | Users may only access and modify their own training data. |
-| BR-012 | GYMX does not create, update, or manage gym records. |
+| BR-005 | A User must have a Weekly Goal before registering a Training Session. |
+| BR-006 | The first Weekly Goal takes effect immediately; a later change takes effect on the following Monday. |
+| BR-007 | The newest pending goal change replaces any earlier pending change. |
+| BR-008 | A Training Streak is evaluated only for a completed Calendar Week. |
+| BR-009 | Each evaluated completed Calendar Week produces one immutable Boolean Weekly Goal Result. |
+| BR-010 | A successful Weekly Goal Result increases the persisted Training Streak by one. |
+| BR-011 | An unsuccessful Weekly Goal Result resets the persisted Training Streak to zero. |
+| BR-012 | A completed Calendar Week may affect the Training Streak only once. |
+| BR-013 | Only the latest eligible Training Session from the current Calendar Week may be undone. |
+| BR-014 | Training Sessions from completed Calendar Weeks are immutable. |
+| BR-015 | Occupancy information is read-only within GYMX and originates from the external Access Control System. |
+| BR-016 | Users may only access and modify their own training data. |
+| BR-017 | GYMX does not create, update, or manage gym records. |
 
 ---
 
@@ -98,6 +106,7 @@ The following concepts have their own identity and lifecycle.
 - User
 - Training Session
 - Weekly Goal
+- Weekly Goal Result
 - Training Streak
 
 ## Entity Responsibilities
@@ -110,6 +119,7 @@ A User:
 
 - owns Training Sessions;
 - owns one active Weekly Goal at most;
+- owns zero or more Weekly Goal Results;
 - owns one current Training Streak;
 - may only access and modify personal training data.
 
@@ -132,8 +142,22 @@ A Weekly Goal:
 
 - belongs to exactly one User;
 - defines a target number of sessions;
+- may contain a pending replacement target and its effective Monday;
 - is used to calculate Progress;
 - is used when evaluating a completed Calendar Week.
+
+### Weekly Goal Result
+
+A Weekly Goal Result represents the finalized outcome of one completed Calendar
+Week for one User.
+
+A Weekly Goal Result:
+
+- belongs to exactly one User;
+- is identified by the User and the Monday starting the evaluated week;
+- stores only whether the applicable goal was reached;
+- is immutable because completed-week Training Sessions are immutable;
+- provides the chronological outcome consumed by Training Streak evaluation.
 
 ### Training Streak
 
@@ -216,6 +240,7 @@ Evaluates a completed Calendar Week and updates the persisted Training Streak.
 The service is responsible for:
 
 - determining whether the applicable Weekly Goal was achieved;
+- persisting one final Weekly Goal Result per completed Calendar Week;
 - increasing or resetting the Training Streak;
 - ensuring that a Calendar Week is evaluated no more than once.
 
@@ -268,7 +293,7 @@ User
  ├─────────────────┬─────────────────┐
  │                 │                 │
  ▼                 ▼                 ▼
-TrainingSession  WeeklyGoal    TrainingStreak
+TrainingSession  WeeklyGoal  WeeklyGoalResult  TrainingStreak
        │              │
        └───────┬──────┘
                ▼
@@ -300,6 +325,7 @@ Possible aggregate structure:
 User
  ├── Training Sessions
  ├── Weekly Goal
+ ├── Weekly Goal Results
  └── Training Streak
 ```
 
@@ -315,11 +341,8 @@ The following topics require further analysis before implementation.
 
 - Can Users register multiple Training Sessions on the same day?
 - Should Training Sessions include optional metadata such as duration or notes?
-- At what moment is a completed Calendar Week evaluated?
-- What mechanism triggers weekly Training Streak evaluation?
-- May Users delete or modify Training Sessions after the relevant Calendar Week has been evaluated?
-- If historical Training Sessions may be changed, how should the Training Streak be corrected?
-- Should historical weekly outcomes be stored separately?
+- What transaction and concurrency strategy guarantees that a completed week is finalized exactly once?
+- Should Undo last check-in also have a fixed time limit?
 - How frequently should Occupancy information be refreshed?
 - What should GYMX display when the Access Control System is unavailable?
 - How should stale Occupancy data be identified and presented?
@@ -338,7 +361,10 @@ New business concepts shall be added to the Domain Analysis before implementatio
 
 ## Single Source of Truth
 
-The Domain Analysis serves as the authoritative description of the business domain. All project documentation and implementation should use the terminology defined in the Ubiquitous Language.
+The GYMX Functional Specification is the authoritative source for accepted
+behaviour and rule status. This Domain Analysis defines the corresponding
+business concepts and ubiquitous language. All technical documentation and
+implementation should remain consistent with both documents.
 
 ## Evolving Model
 
